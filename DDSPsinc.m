@@ -1,7 +1,6 @@
-
 clear; clc; close all;
 
-%%read graph
+%%Reading images
 img_original = imread('cameraman.tif');
 if size(img_original,3) == 3
     img_original = rgb2gray(img_original);
@@ -15,15 +14,16 @@ imshow(img_small, []);
 title('Original Low-Resolution Image (64×64)', 'FontSize', 14);
 impixelinfo;
 
-%% parameter
+%%Parameter settings
 scale = 3;
 R = 5;
 
-%% Up-sampling (Zero-Padding)
+%%Up-sampling (Zero-Padding)
 [m, n] = size(img_small);
 M = m * scale;
 N = n * scale;
 
+% upsampling(Parameter settings)
 img_upsampled = zeros(M, N);
 img_upsampled(1:scale:end, 1:scale:end) = img_small;
 
@@ -32,11 +32,12 @@ imshow(img_upsampled, []);
 title(sprintf('up-sampling (Zero-Padding) - size: %d×%d', M, N), 'FontSize', 14);
 impixelinfo;
 
+% Local magnification
 figure('Name', 'Zero-Padding detail', 'NumberTitle', 'off');
 imshow(img_upsampled(1:30, 1:30), [], 'InitialMagnification', 800);
 title('Up-sampling: Black represents zero values, while bright spots represent original pixels.', 'FontSize', 14);
 
-%% Sinc
+%% ideal Sinc interpolation kernel
 x = -R:1/scale:R;
 h_1d = sinc(x);
 
@@ -44,6 +45,7 @@ h_2d = h_1d' * h_1d;
 
 h_2d = h_2d / sum(h_2d(:));
 
+%Visualizing the 2D Sinc kernel
 figure('Name', 'Step 2: ideal 2D Sinc Interpolation Kernel', 'NumberTitle', 'off');
 surf(x, x, h_2d, 'EdgeColor', 'none');
 colormap('jet'); colorbar;
@@ -51,6 +53,7 @@ xlabel('x'); ylabel('y'); zlabel('h(x,y)');
 title(sprintf('2D Sinc Kernel (radius R=%d, kernel size %d×%d)', R, size(h_2d,1), size(h_2d,2)), 'FontSize', 14);
 view(45, 30);
 
+% 1-dimensional cross-section
 figure('Name', '1D Sinc Kernel waveform', 'NumberTitle', 'off');
 plot(x, h_1d, 'b-', 'LineWidth', 2); grid on;
 xlabel('distance (pixel)'); ylabel('weight');
@@ -63,7 +66,7 @@ for k = [-3, -2, -1, 1, 2, 3]
 end
 legend('sinc(x)', 'center', 'Zero Crossing');
 
-%% LPF-convolution
+%%LPF(convolution)
 img_filtered_rows = conv2(img_upsampled, h_1d, 'same');
 img_result = conv2(img_filtered_rows, h_1d', 'same');
 
@@ -83,6 +86,7 @@ x_original = 1:length(original_line);
 x_upsampled = linspace(1, length(original_line), length(upsampled_line));
 
 figure('Name', '1D Waveform Comparison：Visualization of Interpolation Principles', 'NumberTitle', 'off');
+% Original discrete sampling points
 subplot(3,1,1);
 stem(x_original, original_line, 'b', 'LineWidth', 1.5, 'MarkerSize', 6);
 grid on;
@@ -90,6 +94,7 @@ xlabel('pixel position'); ylabel('Grayscale value');
 title('Original Low-Resolution Sample Points (discrete)', 'FontSize', 12);
 xlim([1, length(original_line)]);
 
+% Upsampling (zero insertion)
 subplot(3,1,2);
 stem(x_upsampled, upsampled_line, 'r', 'LineWidth', 0.5, 'MarkerSize', 3);
 grid on;
@@ -97,6 +102,7 @@ xlabel('pixel position'); ylabel('Grayscale value');
 title('After Zero-Padding', 'FontSize', 12);
 xlim([1, length(original_line)]);
 
+% sinc interpolation
 subplot(3,1,3);
 plot(x_upsampled, reconstructed_line, 'g-', 'LineWidth', 2); grid on;
 hold on;
@@ -116,3 +122,10 @@ subplot(2,3,2); imshow(img_upsampled, []); title('Zero-Padding');
 subplot(2,3,3); imshow(img_result, []); title('Ideal Sinc (Direct Truncation)');
 subplot(2,3,4); imshow(img_bilinear, []); title('Bilinear Interpolation');
 subplot(2,3,5); imshow(img_bicubic, []); title('Bicubic Interpolation');
+
+fprintf('\n==========Waveform Explanation==========\n');
+fprintf('1. The original discrete sampling points have only 64 pixel values.\n');
+fprintf('2. after Zero-Padding\n');
+fprintf('3. Sinc LPF\n');
+fprintf('   The reconstructed curve passes precisely through the original sampling point.（因为 sinc(0)=1, sinc(n)=0）。\n');
+fprintf('================================\n');
