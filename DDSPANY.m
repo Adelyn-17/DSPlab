@@ -20,7 +20,6 @@ R = 5;
 a_values = 2:0.5:4;
 % a_values = [2, 3, 4];
 
-%% Lanczos 1D kernel Interpolation Functions
 lanczos_1d = @(x, a) sinc(x) .* sinc(x/a) .* (abs(x) < a);
 
 function img_out = interpolate_separable(img_up, scale, R, kernel_1d_func)
@@ -32,7 +31,6 @@ function img_out = interpolate_separable(img_up, scale, R, kernel_1d_func)
     img_out = conv2(img_rows, h_1d', 'same');
 end
 
-%% ==================== Step 4: Zero-Padding for All Methods ====================
 img_up = zeros(m_lr*scale, n_lr*scale);
 img_up(1:scale:end, 1:scale:end) = img_lr;
 
@@ -53,7 +51,6 @@ for idx = 1:length(a_values)
     fprintf('  a = %.1f : PSNR = %.2f dB, SSIM = %.4f\n', a, psnr_lanczos(idx), ssim_lanczos(idx));
 end
 
-%% SSIM
 [~, opt_idx] = max(ssim_lanczos);
 a_opt = a_values(opt_idx);
 fprintf('\nOptimal a based on SSIM: a = %.1f\n', a_opt);
@@ -137,7 +134,6 @@ nexttile; imshow(img_linear_crop(roi_row, roi_col), []); title('Linear');
 nexttile; imshow(img_bicubic_crop(roi_row, roi_col), []); title('Bicubic');
 nexttile; imshow(img_lanczos_crop(roi_row, roi_col), []); title(sprintf('Lanczos a=%.1f', a_opt));
 
-% Save workspace for later use in report
 save('interpolation_comparison.mat', 'a_values', 'psnr_lanczos', 'ssim_lanczos', ...
     'a_opt', 'psnr_linear', 'ssim_linear', 'psnr_bicubic', 'ssim_bicubic', ...
     'psnr_lanc_opt', 'ssim_lanc_opt');
