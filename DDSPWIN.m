@@ -12,7 +12,6 @@ figure('Name', 'Step 0: Initial Low-Resolution Image', 'NumberTitle', 'off');
 imshow(img_small, []);
 title('Initial Low-Resolution Image (64×64)', 'FontSize', 14);
 
-%% parameter
 scale = 3; 
 R = 5; 
 beta = 5;
@@ -24,7 +23,6 @@ N = n * scale;
 img_upsampled = zeros(M, N);
 img_upsampled(1:scale:end, 1:scale:end) = img_small;
 
-%% ideal sinc kernel
 x = -R:1/scale:R;
 h_ideal_1d = sinc(x);
 
@@ -55,7 +53,6 @@ subplot(1,3,3);
 imshow(img_win, []); title('Windowed Sinc (Kaiser Window)', 'FontSize', 12);
 impixelinfo;
 
-% zoom in
 figure('Name', 'details-rining', 'NumberTitle', 'off');
 subplot(1,2,1);
 imshow(img_ideal(60:140, 60:140), []); 
@@ -86,13 +83,11 @@ x_upsampled = linspace(1, length(original_line), length(ideal_line));
 
 figure('Name', 'Windowing Suppresses Gibbs Overshoot', 'NumberTitle', 'off');
 
-% initial discrete sampling points
 subplot(3,1,1);
 stem(x_original, original_line, 'b', 'LineWidth', 1.2, 'MarkerSize', 5);
 grid on; xlim([1, length(original_line)]);
 ylabel('Grayscale'); title('Original Low-Resolution Sample Points', 'FontSize', 12);
 
-% ideal sinc
 subplot(3,1,2);
 plot(x_upsampled, ideal_line, 'b-', 'LineWidth', 1.5); grid on; hold on;
 stem(x_original, original_line, 'b', 'LineWidth', 1, 'MarkerSize', 4);
@@ -102,7 +97,6 @@ ylabel('Grayscale'); title('ideal Sinc: have GIBBS', 'FontSize', 12);
 idx = idx + 29;
 text(x_upsampled(idx), ideal_line(idx)+10, '← 过冲', 'Color', 'red', 'FontSize', 10);
 
-% windowed sinc 
 subplot(3,1,3);
 plot(x_upsampled, win_line, 'r-', 'LineWidth', 1.5); grid on; hold on;
 stem(x_original, original_line, 'b', 'LineWidth', 1, 'MarkerSize', 4);
