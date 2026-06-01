@@ -1,35 +1,31 @@
-%% Methods: PSNR and SSIM
-% Compare Lanczos with different 'a' values, Linear, and Bicubic.
-% Determine optimal Lanczos 'a' and demonstrate Lanczos superiority.
-
 clear; clc; close all;
 
 %% Prepare Ground Truth
-% 256x256
 img_ref = imread('cameraman.tif');
 if size(img_ref,3) == 3
     img_ref = rgb2gray(img_ref);
 end
 img_ref = double(img_ref);
 
+% 256x256 for meaningful statistics
 [M_ref, N_ref] = size(img_ref);
 
-%% Generate Low-Resolution Input
+%% Low-Resolution Input
 scale = 3;
 
 img_lr = imresize(img_ref, 1/scale, 'bicubic');
 
+% Dimensions of LR image
 [m_lr, n_lr] = size(img_lr);
 
-%% Parameters for Lanczos
+%%  Parameters
 R = 5;
 a_values = 2:0.5:4;
 
-%%Define Interpolation Functions
-% Lanczos 1D kernel
+%% Lanczos 1D kernel
 lanczos_1d = @(x, a) sinc(x) .* sinc(x/a) .* (abs(x) < a);
 
-% Separable convolution interpolation
+%convolution interpolation
 function img_out = interpolate_separable(img_up, scale, R, kernel_1d_func)
     [M, N] = size(img_up);
     x = -R : 1/scale : R;
@@ -42,11 +38,11 @@ function img_out = interpolate_separable(img_up, scale, R, kernel_1d_func)
     img_out = conv2(img_rows, h_1d', 'same');
 end
 
-%% Zero-Padding for Custom Methods
+%% Zero-Padding
 img_up = zeros(m_lr*scale, n_lr*scale);
 img_up(1:scale:end, 1:scale:end) = img_lr;
 
-%%Evaluate Lanczos for Each 'a'
+%% Evaluate Lanczos for Each 'a'
 psnr_lanczos = zeros(1, length(a_values));
 ssim_lanczos = zeros(1, length(a_values));
 
@@ -66,12 +62,13 @@ for idx = 1:length(a_values)
     fprintf('  a = %.1f : PSNR = %.2f dB, SSIM = %.4f\n', a, psnr_lanczos(idx), ssim_lanczos(idx));
 end
 
-%% Find Optimal 'a' 
+
+% SSIM
 [~, opt_idx] = max(ssim_lanczos);
 a_opt = a_values(opt_idx);
 fprintf('\nOptimal a based on SSIM: a = %.1f\n', a_opt);
 
-%%Evaluate Linear and Bicubic
+%% Linear and Bicubic
 img_linear = imresize(img_lr, scale, 'bilinear');
 img_bicubic = imresize(img_lr, scale, 'bicubic');
 
@@ -91,7 +88,6 @@ ssim_bicubic = ssim(img_bicubic_crop, img_ref);
 psnr_lanc_opt = psnr_lanczos(opt_idx);
 ssim_lanc_opt = ssim_lanczos(opt_idx);
 
-%% Display Summary Table
 fprintf('\n========== Final Comparison ==========\n');
 fprintf('Method           PSNR (dB)   SSIM\n');
 fprintf('------------------------------------\n');
@@ -100,7 +96,6 @@ fprintf('Bicubic          %8.2f   %.4f\n', psnr_bicubic, ssim_bicubic);
 fprintf('Lanczos (a=%.1f)  %8.2f   %.4f\n', a_opt, psnr_lanc_opt, ssim_lanc_opt);
 fprintf('=====================================\n');
 
-%% Visualize Metrics
 % Figure 1: Lanczos 'a' sweep
 figure('Name', 'Lanczos Parameter Sweep', 'NumberTitle', 'off');
 yyaxis left;
@@ -134,7 +129,6 @@ ylabel('SSIM');
 title('SSIM Comparison');
 grid on;
 
-%% Visual Quality Comparison
 figure('Name', 'Visual Quality Comparison', 'NumberTitle', 'off');
 tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
 
@@ -146,7 +140,6 @@ title(sprintf('Bicubic (PSNR=%.2f, SSIM=%.4f)', psnr_bicubic, ssim_bicubic));
 nexttile; imshow(img_lanczos_crop, [0, 255]); 
 title(sprintf('Lanczos a=%.1f (PSNR=%.2f, SSIM=%.4f)', a_opt, psnr_lanc_opt, ssim_lanc_opt));
 
-% Zoomed detail region (camera tripod area)
 roi_row = 120:160;
 roi_col = 100:140;
 
@@ -157,3 +150,4 @@ nexttile; imshow(img_ref(roi_row, roi_col), [0, 255]); title('Ground Truth');
 nexttile; imshow(img_linear_crop(roi_row, roi_col), [0, 255]); title('Linear');
 nexttile; imshow(img_bicubic_crop(roi_row, roi_col), [0, 255]); title('Bicubic');
 nexttile; imshow(img_lanczos_crop(roi_row, roi_col), [0, 255]); title(sprintf('Lanczos a=%.1f', a_opt));
+
