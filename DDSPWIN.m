@@ -1,7 +1,5 @@
-%%windowed Sinc and ideal Sinc
 clear; clc; close all;
 
-%% read graph
 img_original = imread('cameraman.tif');
 if size(img_original,3) == 3
     img_original = rgb2gray(img_original);
@@ -15,8 +13,8 @@ imshow(img_small, []);
 title('Initial Low-Resolution Image (64×64)', 'FontSize', 14);
 
 %% parameter
-scale = 3;
-R = 5;
+scale = 3; 
+R = 5; 
 beta = 5;
 
 %% Up-sampling (Zero-Padding)
@@ -26,25 +24,25 @@ N = n * scale;
 img_upsampled = zeros(M, N);
 img_upsampled(1:scale:end, 1:scale:end) = img_small;
 
-%% ideal Sinc
+%% ideal sinc kernel
 x = -R:1/scale:R;
 h_ideal_1d = sinc(x);
 
 h_ideal_2d = h_ideal_1d' * h_ideal_1d;
-h_ideal_2d = h_ideal_2d / sum(h_ideal_2d(:));
+h_ideal_2d = h_ideal_2d / sum(h_ideal_2d(:));   % 归一化
 
-%% windowed Sinc（Kaiser)
-w_1d = kaiser(length(x), beta)'; 
+%% Sinc kernel-Kaiser window
+w_1d = kaiser(length(x), beta)';
 h_win_1d = h_ideal_1d .* w_1d;
 
 h_win_2d = h_win_1d' * h_win_1d;
-h_win_2d = h_win_2d / sum(h_win_2d(:));   % 归一化
+h_win_2d = h_win_2d / sum(h_win_2d(:));
 
-%% ideal Sinc
+%% convolution for ideal sinc
 img_ideal_rows = conv2(img_upsampled, h_ideal_1d, 'same');
 img_ideal = conv2(img_ideal_rows, h_ideal_1d', 'same');
 
-%% concolution windowed Sinc
+%% convolution for window sinc
 img_win_rows = conv2(img_upsampled, h_win_1d, 'same');
 img_win = conv2(img_win_rows, h_win_1d', 'same');
 
@@ -57,6 +55,7 @@ subplot(1,3,3);
 imshow(img_win, []); title('Windowed Sinc (Kaiser Window)', 'FontSize', 12);
 impixelinfo;
 
+% zoom in
 figure('Name', 'details-rining', 'NumberTitle', 'off');
 subplot(1,2,1);
 imshow(img_ideal(60:140, 60:140), []); 
@@ -68,31 +67,32 @@ title('Windowed Sinc: Significant Ringing Suppression', 'FontSize', 12);
 figure('Name', 'Comparison of 1D Interpolation Kernel Waveforms', 'NumberTitle', 'off');
 plot(x, h_ideal_1d, 'b-', 'LineWidth', 1.5); hold on;
 plot(x, h_win_1d, 'r-', 'LineWidth', 1.5);
-plot(x, w_1d / max(w_1d) * max(h_ideal_1d), 'k--', 'LineWidth', 1);
+plot(x, w_1d / max(w_1d) * max(h_ideal_1d), 'k--', 'LineWidth', 1); % 归一化显示窗形状
 grid on;
 xlabel('Distance (Pixels)'); ylabel('weight');
 title('1D Sinc kernel：no wind vs.have wind (Kaiser)', 'FontSize', 14);
 legend('ideal Sinc ', 'windowed Sinc', 'Kaiser', 'Location', 'best');
 xlim([-R, R]);
 
-row_original = 40; 
+row_original = 40;
 row_upsampled = row_original * scale;
 
 original_line = img_small(row_original, :);
 ideal_line = img_ideal(row_upsampled, :);
 win_line = img_win(row_upsampled, :);
 
-%x
 x_original = 1:length(original_line);
 x_upsampled = linspace(1, length(original_line), length(ideal_line));
 
 figure('Name', 'Windowing Suppresses Gibbs Overshoot', 'NumberTitle', 'off');
 
+% initial discrete sampling points
 subplot(3,1,1);
 stem(x_original, original_line, 'b', 'LineWidth', 1.2, 'MarkerSize', 5);
 grid on; xlim([1, length(original_line)]);
 ylabel('Grayscale'); title('Original Low-Resolution Sample Points', 'FontSize', 12);
 
+% ideal sinc
 subplot(3,1,2);
 plot(x_upsampled, ideal_line, 'b-', 'LineWidth', 1.5); grid on; hold on;
 stem(x_original, original_line, 'b', 'LineWidth', 1, 'MarkerSize', 4);
@@ -102,6 +102,7 @@ ylabel('Grayscale'); title('ideal Sinc: have GIBBS', 'FontSize', 12);
 idx = idx + 29;
 text(x_upsampled(idx), ideal_line(idx)+10, '← 过冲', 'Color', 'red', 'FontSize', 10);
 
+% windowed sinc 
 subplot(3,1,3);
 plot(x_upsampled, win_line, 'r-', 'LineWidth', 1.5); grid on; hold on;
 stem(x_original, original_line, 'b', 'LineWidth', 1, 'MarkerSize', 4);
@@ -113,4 +114,14 @@ local_mean = mean(original_line(20:30));
 overshoot_ideal = (max(ideal_line(35:45)) - local_mean) / local_mean * 100;
 overshoot_win = (max(win_line(35:45)) - local_mean) / local_mean * 100;
 
+fprintf('\n========== Overshoot amplitude comparison ==========\n');
+fprintf('ideal sinc %.1f%%\n', overshoot_ideal);
+fprintf('windowed Sinc (Kaiser): %.1f%%\n', overshoot_win);
+fprintf('Overshoot suppression rate: %.1f%%\n', (overshoot_ideal-overshoot_win)/overshoot_ideal*100);
+fprintf('==================================\n');
 
+fprintf('\n========== Waveform interpretation ==========\n');
+fprintf('1. ideal sinc\n');
+fprintf('2. Kaiser windows\n');
+fprintf('3. After adding a window, the overshoot at the edge is significantly reduced.\n');
+fprintf('================================\n');
