@@ -52,7 +52,6 @@ for k = [-3, -2, -1, 1, 2, 3]
 end
 legend('sinc(x)', 'center', 'Zero Crossing');
 
-%% LPF convolution
 img_filtered_rows = conv2(img_upsampled, h_1d, 'same');
 img_result = conv2(img_filtered_rows, h_1d', 'same');
 
