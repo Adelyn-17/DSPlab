@@ -6,11 +6,9 @@ if size(img_original,3) == 3
 end
 img_original = double(img_original);
 
-%%parameter
 scale = 3;
 R = 5;
 
-%% Up-sampling (Zero-Padding)
 [m, n] = size(img_original);
 M = m * scale;
 N = n * scale;
@@ -27,7 +25,6 @@ figure('Name', 'Zero-Padding detail', 'NumberTitle', 'off');
 imshow(img_upsampled(1:30, 1:30), [], 'InitialMagnification', 800);
 title('Up-sampling: Black represents zero values, while bright spots represent original pixels.', 'FontSize', 14);
 
-%% ideal 2D Sinc interpolation
 x = -R:1/scale:R;
 h_1d = sinc(x);
 
