@@ -16,7 +16,6 @@ scale = 3;
 R = 5; 
 beta = 5;
 
-%% Up-sampling (Zero-Padding)
 [m, n] = size(img_small);
 M = m * scale;
 N = n * scale;
@@ -29,18 +28,15 @@ h_ideal_1d = sinc(x);
 h_ideal_2d = h_ideal_1d' * h_ideal_1d;
 h_ideal_2d = h_ideal_2d / sum(h_ideal_2d(:));   % 归一化
 
-%% Sinc kernel-Kaiser window
 w_1d = kaiser(length(x), beta)';
 h_win_1d = h_ideal_1d .* w_1d;
 
 h_win_2d = h_win_1d' * h_win_1d;
 h_win_2d = h_win_2d / sum(h_win_2d(:));
 
-%% convolution for ideal sinc
 img_ideal_rows = conv2(img_upsampled, h_ideal_1d, 'same');
 img_ideal = conv2(img_ideal_rows, h_ideal_1d', 'same');
 
-%% convolution for window sinc
 img_win_rows = conv2(img_upsampled, h_win_1d, 'same');
 img_win = conv2(img_win_rows, h_win_1d', 'same');
 
