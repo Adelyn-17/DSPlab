@@ -55,7 +55,6 @@ end
 a_opt = a_values(opt_idx);
 fprintf('\nOptimal a based on SSIM: a = %.1f\n', a_opt);
 
-%% Linear and Bicubic
 img_linear = imresize(img_lr, scale, 'bilinear');
 img_bicubic = imresize(img_lr, scale, 'bicubic');
 
